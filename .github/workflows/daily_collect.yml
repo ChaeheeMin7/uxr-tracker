@@ -43,19 +43,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 4. 수집 실행
+      # # 4. 수집 실행
       - name: Run collector
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python collect.py
+        run: |
+          mkdir -p data  # data 폴더가 없으면 생성
+          python collect.py
 
-      # 5. 수집된 CSV를 저장소에 커밋 & 푸시
-      #    → 이 커밋이 Streamlit Cloud에서 자동으로 반영됩니다
+      # 5. 수집된 데이터를 저장소에 커밋 & 푸시
       - name: Commit and push data
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name  "GitHub Actions Bot"
-          git add data/
-          git diff --staged --quiet || git commit -m "chore: auto collect $(date +'%Y-%m-%d')"
-          git push
-
+          git add data/ || true  # data 폴더 내 변경사항 추가 (없어도 에러 안 나게)
+          git add *.csv || true  # 루트에 있는 csv 파일도 추가
+          git diff --staged --quiet || (git commit -m "chore: auto collect $(date +'%Y-%m-%d')" && git push)
