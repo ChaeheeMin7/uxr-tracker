@@ -129,8 +129,9 @@ with st.sidebar:
     st.divider()
 
     page = st.radio(
+        
         "페이지",
-        ["📊 시장 트렌드", "📈 내 성장 기록", "🤖 AI 갭 분석", "📝 로그 입력"],
+        ["📊 시장 트렌드", "📈 내 성장 기록", "🤖 AI 갭 분석", "📝 로그 입력","📉 주가 예측 모델" ],
         label_visibility="collapsed",
     )
 
