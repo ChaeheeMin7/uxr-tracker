@@ -1,1 +1,61 @@
+# .github/workflows/daily_collect.yml
+# ──────────────────────────────────────────────────────────────────────────────
+# 2단계: 자동화 설정
+#
+# 매일 오전 9시(KST)에 자동으로 collect.py 를 실행합니다.
+# GitHub → Settings → Secrets and variables → Actions 에서
+# ANTHROPIC_API_KEY 를 추가해야 합니다.
+#
+# 수동 실행: GitHub 저장소 → Actions 탭 → "Daily UXR Data Collect" → Run workflow
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Daily UXR Data Collect
+
+on:
+  # KST 09:00 = UTC 00:00
+  schedule:
+    - cron: "0 0 * * *"
+
+  # 수동 실행 버튼 (Actions 탭에서 클릭 가능)
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # data/ 폴더에 CSV 저장 후 커밋하기 위해 필요
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Python 3.11 설치
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. 의존성 설치
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 4. 수집 실행
+      - name: Run collector
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python collect.py
+
+      # 5. 수집된 CSV를 저장소에 커밋 & 푸시
+      #    → 이 커밋이 Streamlit Cloud에서 자동으로 반영됩니다
+      - name: Commit and push data
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name  "GitHub Actions Bot"
+          git add data/
+          git diff --staged --quiet || git commit -m "chore: auto collect $(date +'%Y-%m-%d')"
+          git push
 
